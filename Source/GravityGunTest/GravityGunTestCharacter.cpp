@@ -11,7 +11,7 @@
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
 
-#include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "AbilityActor/AbilitySmokeGrenade.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -40,8 +40,6 @@ AGravityGunTestCharacter::AGravityGunTestCharacter()
 	bUseControllerRotationPitch = true;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
-
-	PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandles"));
 
 }
 
@@ -75,6 +73,12 @@ void AGravityGunTestCharacter::SetupPlayerInputComponent(UInputComponent* Player
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGravityGunTestCharacter::Look);
+
+		// Use Skill 1 HotBar
+		EnhancedInputComponent->BindAction(SkillAction1, ETriggerEvent::Started, this, &AGravityGunTestCharacter::UseSkill1);
+
+		// Use Skill 2 HotBar
+		EnhancedInputComponent->BindAction(SkillAction2, ETriggerEvent::Started, this, &AGravityGunTestCharacter::UseSkill2);
 	}
 	else
 	{
@@ -107,6 +111,50 @@ void AGravityGunTestCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AGravityGunTestCharacter::UseSkill1()
+{
+	// return when the skill cooldown is not yet finish.
+	if (bPressedSkill1) return;
+
+	// Try and fire a projectile
+	if (AbilitySmokeGrenadeClass != nullptr)
+	{
+		UWorld* const World = GetWorld();
+		if (World != nullptr)
+		{
+			const FRotator SpawnRotation = GetFirstPersonCameraComponent()->GetComponentRotation();
+			const FVector SpawnLocation = GetFirstPersonCameraComponent()->GetComponentLocation() + (GetFirstPersonCameraComponent()->GetForwardVector() * 100.f);
+
+			//Set Spawn Collision Handling Override
+			FActorSpawnParameters ActorSpawnParams;
+			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+			// Spawn the projectile at the muzzle
+			AAbilitySmokeGrenade* SmokeGrenade = World->SpawnActor<AAbilitySmokeGrenade>(AbilitySmokeGrenadeClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+			SmokeGrenade->SetOwner(this);
+
+			bPressedSkill1 = true;
+			OnSkillUse.Broadcast(true);
+
+			FTimerHandle UseSkillTimerHandle;
+			float Cooldown = SmokeGrenade->AbilityDetailInfo.Cooldown;
+			GetWorld()->GetTimerManager().SetTimer(UseSkillTimerHandle, this, &AGravityGunTestCharacter::SkillCooldown, Cooldown);
+			float NewCooldown = SmokeGrenade->AbilityDetailInfo.Cooldown;
+		}
+
+	}
+}
+
+void AGravityGunTestCharacter::UseSkill2()
+{
+}
+
+void AGravityGunTestCharacter::SkillCooldown()
+{
+	bPressedSkill1 = false;
+	OnSkillUse.Broadcast(false);
 }
 
 

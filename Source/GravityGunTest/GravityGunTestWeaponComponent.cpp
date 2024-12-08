@@ -27,14 +27,19 @@ UGravityGunTestWeaponComponent::UGravityGunTestWeaponComponent()
 void UGravityGunTestWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (bIsObjectPickedUp)
+	if (bIsObjectPickedUp && PickedUpProjectile)
 	{
-		const FVector Location = Character->GetFirstPersonCameraComponent()->GetComponentLocation() + (Character->GetActorForwardVector() * 150.f);
-		GravityGunHitResult.GetActor()->SetActorLocation(Location,true);
+		PickupObjectSetLocation();
 	}
 
-	FString BoolCheck = bIsFirePressed ? TEXT("True") : TEXT("False");
-	GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Red, FString::Printf(TEXT("FirePressed: %s"), *BoolCheck));
+	
+}
+
+void UGravityGunTestWeaponComponent::PickupObjectSetLocation()
+{
+	// when gravity gun get a projectile. the projectile will move in front of the camera
+	const FVector Location = Character->GetFirstPersonCameraComponent()->GetComponentLocation() + (Character->GetActorForwardVector() * 150.f);
+	GravityGunHitResult.GetActor()->SetActorLocation(Location, true);
 }
 
 
@@ -47,23 +52,29 @@ void UGravityGunTestWeaponComponent::Fire()
 
 	bIsFirePressed = true;
 
+	// use sphere trace to get the projectile when near
 	GunSphereTrace();
 
-	
 	// Try and play the sound if specified
 	if (FireSound != nullptr)
 	{
-		//UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
+		if (!bIsFirePressed)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
+		}
 	}
 	
 	// Try and play a firing animation if specified
-	if (FireAnimation != nullptr)
+	if (FireAnimation != nullptr && !bIsFirePressed)
 	{
 		// Get the animation object for the arms mesh
 		UAnimInstance* AnimInstance = Character->GetMesh1P()->GetAnimInstance();
 		if (AnimInstance != nullptr)
 		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
+			if (!bIsFirePressed)
+			{
+				AnimInstance->Montage_Play(FireAnimation, 1.f);
+			}
 		}
 	}
 }
@@ -93,7 +104,7 @@ void UGravityGunTestWeaponComponent::GunSphereTrace()
 		ActorToIgnore.Add(Character);
 
 		UKismetSystemLibrary::SphereTraceSingle(this, StartLoc, EndLoc, 10.f, ETraceTypeQuery::TraceTypeQuery1,
-			false, ActorToIgnore, EDrawDebugTrace::ForDuration, GravityGunHitResult, true);
+			false, ActorToIgnore, EDrawDebugTrace::None, GravityGunHitResult, true);
 		if (GravityGunHitResult.bBlockingHit)
 		{
 			if (GravityGunHitResult.GetComponent()->GetCollisionObjectType() != ECollisionChannel::ECC_PhysicsBody) return;

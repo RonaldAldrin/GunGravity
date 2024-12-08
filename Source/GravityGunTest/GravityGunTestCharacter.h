@@ -13,9 +13,10 @@ class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
-class UPhysicsHandleComponent;
+class AAbilitySmokeGrenade;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkillUseSignature, bool, UseSKill);
 
 UCLASS(config=Game)
 class AGravityGunTestCharacter : public ACharacter
@@ -44,23 +45,41 @@ class AGravityGunTestCharacter : public ACharacter
 
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LookAction;
+	UInputAction* LookAction;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PhysicsHandle", meta = (AllowPrivateAccess = "true"))
-	UPhysicsHandleComponent* PhysicsHandle;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> SkillAction1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> SkillAction2;
+
 	
 public:
 	AGravityGunTestCharacter();
 
-
-
 protected:
+
+	/** Projectile class to spawn */
+	UPROPERTY(EditDefaultsOnly, Category = Projectile)
+	TSubclassOf<AAbilitySmokeGrenade> AbilitySmokeGrenadeClass;
+
+	UPROPERTY(BlueprintAssignable,BlueprintCallable)
+	FOnSkillUseSignature OnSkillUse;
+
+	bool bPressedSkill1 = false;
+
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
+	void UseSkill1();
+
+	void UseSkill2();
+
+	UFUNCTION()
+	void SkillCooldown();
 
 protected:
 	// APawn interface

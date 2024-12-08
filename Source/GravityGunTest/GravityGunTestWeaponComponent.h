@@ -8,6 +8,7 @@
 
 class AGravityGunTestCharacter;
 
+
 UCLASS(Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class GRAVITYGUNTEST_API UGravityGunTestWeaponComponent : public USkeletalMeshComponent
 {
@@ -43,7 +44,7 @@ public:
 	bool bIsFirePressed = false;
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = "Gun Properties")
-	float PickUpRadius = 1000.f;
+	float PickUpRadius = 500.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gun Properties")
 	float FiringForce = 10000.f;
@@ -79,4 +80,6 @@ protected:
 private:
 	/** The Character holding this weapon*/
 	AGravityGunTestCharacter* Character;
+
+	void PickupObjectSetLocation();
 };

@@ -10,8 +10,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
-#include "AbilityActor/AbilitySmokeGrenade.h"
+#include "AbilityActor/AbilityActorBase.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -118,11 +120,11 @@ void AGravityGunTestCharacter::UseSkill1()
 	// return when the skill cooldown is not yet finish.
 	if (bPressedSkill1) return;
 
-	// Try and fire a projectile
-	if (AbilitySmokeGrenadeClass != nullptr)
+	// Try and use skill 1
+	UWorld* const World = GetWorld();
+	if (World != nullptr)
 	{
-		UWorld* const World = GetWorld();
-		if (World != nullptr)
+		if (AbilitySmokeGrenadeClass)
 		{
 			const FRotator SpawnRotation = GetFirstPersonCameraComponent()->GetComponentRotation();
 			const FVector SpawnLocation = GetFirstPersonCameraComponent()->GetComponentLocation() + (GetFirstPersonCameraComponent()->GetForwardVector() * 100.f);
@@ -130,31 +132,89 @@ void AGravityGunTestCharacter::UseSkill1()
 			//Set Spawn Collision Handling Override
 			FActorSpawnParameters ActorSpawnParams;
 			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-			// Spawn the projectile at the muzzle
-			AAbilitySmokeGrenade* SmokeGrenade = World->SpawnActor<AAbilitySmokeGrenade>(AbilitySmokeGrenadeClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+			// Spawn the projectile at  front
+			SmokeGrenade = World->SpawnActor<AAbilityActorBase>(AbilitySmokeGrenadeClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
 			SmokeGrenade->SetOwner(this);
 
-			bPressedSkill1 = true;
-			OnSkillUse.Broadcast(true);
 
-			FTimerHandle UseSkillTimerHandle;
+			bPressedSkill1 = true;
+			OnSkill1Use.Broadcast(bPressedSkill1);
+
+			
 			float Cooldown = SmokeGrenade->AbilityDetailInfo.Cooldown;
-			GetWorld()->GetTimerManager().SetTimer(UseSkillTimerHandle, this, &AGravityGunTestCharacter::SkillCooldown, Cooldown);
-			float NewCooldown = SmokeGrenade->AbilityDetailInfo.Cooldown;
+			GetWorld()->GetTimerManager().SetTimer(Skill1TimerHandle, this, &AGravityGunTestCharacter::SkillCooldown1, Cooldown);
 		}
+	}
+
+}
+
+void AGravityGunTestCharacter::SkillCooldown1()
+{
+	bPressedSkill1 = false;
+	OnSkill1Use.Broadcast(bPressedSkill1);
+	GetWorld()->GetTimerManager().ClearTimer(Skill1TimerHandle);
+}
+
+
+void AGravityGunTestCharacter::UseSkill2()
+{
+	// return when the skill cooldown is not yet finish.
+	if (bPressedSkill2) return;
+
+	// Try and use skill 2
+	UWorld* const World = GetWorld();
+	if (World != nullptr)
+	{
+		const FRotator SpawnRotation = GetFirstPersonCameraComponent()->GetComponentRotation();
+		FVector SpawnLocation = GetFirstPersonCameraComponent()->GetComponentLocation() + (GetFirstPersonCameraComponent()->GetForwardVector() * 400.f);
+
+		//Set Spawn Collision Handling Override
+		FActorSpawnParameters ActorSpawnParams;
+		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+		// Spawn the projectile at  front
+		SummonTotem = World->SpawnActor<AAbilityActorBase>(AbilitySummonTotemClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+		//SummonTotem->SetOwner(this);
+
+
+		bPressedSkill2 = true;
+		OnSkill2Use.Broadcast(bPressedSkill2);
+
+		
+		float Cooldown = SummonTotem->AbilityDetailInfo.Cooldown;
+		GetWorld()->GetTimerManager().SetTimer(Skill2TimerHandle, this, &AGravityGunTestCharacter::SkillCooldown2, Cooldown);
+
 
 	}
 }
 
-void AGravityGunTestCharacter::UseSkill2()
+void AGravityGunTestCharacter::SkillCooldown2()
 {
+	bPressedSkill2 = false;
+	OnSkill2Use.Broadcast(bPressedSkill2);
+	GetWorld()->GetTimerManager().ClearTimer(Skill2TimerHandle);
 }
 
-void AGravityGunTestCharacter::SkillCooldown()
+float AGravityGunTestCharacter::GetCooldownPercentage(FTimerHandle SkillTimerHandle)
 {
-	bPressedSkill1 = false;
-	OnSkillUse.Broadcast(false);
+	float ElapsedTime = UKismetSystemLibrary::K2_GetTimerElapsedTimeHandle(this, SkillTimerHandle);
+	float RemainingTime = UKismetSystemLibrary::K2_GetTimerRemainingTimeHandle(this, SkillTimerHandle);
+	float Timer = ElapsedTime + RemainingTime;
+	return UKismetMathLibrary::NormalizeToRange(RemainingTime, 0.0f, Timer);
 }
+
+
+void AGravityGunTestCharacter::SpawnSkill(UWorld* World, TSubclassOf<AAbilityActorBase> SkilltoSpawnClass, AAbilityActorBase* SkilltoSpawn, const FVector Location, const FRotator Rotation)
+{
+
+	if (SkilltoSpawnClass != nullptr)
+	{
+
+
+		
+	}
+
+}
+
 
 

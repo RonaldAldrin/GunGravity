@@ -25,6 +25,8 @@ struct FAbilityDetailInfo
 	TObjectPtr<UTexture2D> Icon = nullptr;
 };
 
+
+
 /**
  * 
  */

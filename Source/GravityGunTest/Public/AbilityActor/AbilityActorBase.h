@@ -21,8 +21,12 @@ public:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere , Category = "Ability Detail")
 	FAbilityDetailInfo AbilityDetailInfo;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY()
 	TObjectPtr<AGravityGunTestCharacter> Character;
+
+	/** Static mesh component */
+	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
+	TObjectPtr<UStaticMeshComponent> StaticMesh;
 
 protected:
 	// Called when the game starts or when spawned

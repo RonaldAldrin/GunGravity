@@ -11,14 +11,15 @@ class UProjectileMovementComponent;
 /**
  * 
  */
+class UNiagaraSystem;
+class UNiagaraComponent;
+
 UCLASS()
 class GRAVITYGUNTEST_API AAbilitySmokeGrenade : public AAbilityActorBase
 {
 	GENERATED_BODY()
 
-	/** Sphere collision component */
-	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
-	TObjectPtr<UStaticMeshComponent> StaticMesh;
+
 
 	/** Projectile movement component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -35,4 +36,12 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+
+	virtual void Destroyed() override;
+
+	UPROPERTY(BlueprintReadWrite,EditAnywhere,Category = "Niagara")
+	TObjectPtr<UNiagaraSystem> SmokeSystem;
+
+	UPROPERTY()
+	TObjectPtr<UNiagaraComponent> Smoke;
 };

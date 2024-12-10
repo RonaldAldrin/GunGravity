@@ -13,10 +13,14 @@ class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
+class AAbilityActorBase;
 class AAbilitySmokeGrenade;
+class AAbilitySummonTotem;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkillUseSignature, bool, UseSKill);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkill1UseSignature,bool,UsingSkill);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkill2UseSignature, bool, UsingSkill);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnObjectiveSignature);
 
 UCLASS(config=Game)
 class AGravityGunTestCharacter : public ACharacter
@@ -57,16 +61,38 @@ class AGravityGunTestCharacter : public ACharacter
 public:
 	AGravityGunTestCharacter();
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnObjectiveSignature OnObjective;
+
 protected:
 
-	/** Projectile class to spawn */
-	UPROPERTY(EditDefaultsOnly, Category = Projectile)
-	TSubclassOf<AAbilitySmokeGrenade> AbilitySmokeGrenadeClass;
+	/** smoke grenade class to spawn */
+	UPROPERTY(EditDefaultsOnly, Category = AbilityClass)
+	TSubclassOf<AAbilityActorBase> AbilitySmokeGrenadeClass;
+
+	UPROPERTY()
+	TObjectPtr<AAbilityActorBase> SmokeGrenade;
+
+	/** summon totem class to spawn */
+	UPROPERTY(EditDefaultsOnly, Category = AbilityClass)
+	TSubclassOf<AAbilityActorBase> AbilitySummonTotemClass;
+
+	UPROPERTY()
+	TObjectPtr<AAbilityActorBase> SummonTotem;
 
 	UPROPERTY(BlueprintAssignable,BlueprintCallable)
-	FOnSkillUseSignature OnSkillUse;
+	FOnSkill1UseSignature OnSkill1Use;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnSkill2UseSignature OnSkill2Use;
 
 	bool bPressedSkill1 = false;
+	UPROPERTY(BlueprintReadOnly,VisibleAnywhere, Category ="SkillTimerHandle")
+	FTimerHandle Skill1TimerHandle;
+
+	bool bPressedSkill2 = false;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "SkillTimerHandle")
+	FTimerHandle Skill2TimerHandle;
 
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -79,7 +105,15 @@ protected:
 	void UseSkill2();
 
 	UFUNCTION()
-	void SkillCooldown();
+	void SkillCooldown1();
+
+	UFUNCTION()
+	void SkillCooldown2();
+
+	UFUNCTION(BlueprintCallable,BlueprintPure)
+	float GetCooldownPercentage(FTimerHandle SkillTimerHandle);
+
+	void SpawnSkill(UWorld* World,TSubclassOf<AAbilityActorBase> SkilltoSpawnClass, AAbilityActorBase* SkilltoSpawn,const FVector Location,const FRotator Rotation);
 
 protected:
 	// APawn interface

@@ -167,10 +167,10 @@ void AGravityGunTestCharacter::UseSkill2()
 	{
 		const FRotator SpawnRotation = GetFirstPersonCameraComponent()->GetComponentRotation();
 		FVector SpawnLocation = GetFirstPersonCameraComponent()->GetComponentLocation() + (GetFirstPersonCameraComponent()->GetForwardVector() * 400.f);
-
+		SpawnLocation.Z = 300.f;
 		//Set Spawn Collision Handling Override
 		FActorSpawnParameters ActorSpawnParams;
-		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 		// Spawn the projectile at  front
 		SummonTotem = World->SpawnActor<AAbilityActorBase>(AbilitySummonTotemClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
